@@ -1,0 +1,39 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  annotations:
+    tekton.dev/tags: git
+  labels:
+    app.kubernetes.io/version: "0.1"
+    operator.tekton.dev/provider-type: community
+  name: provision-preview-environment
+  namespace: cicd
+spec:
+  description: Creates a preview environment from a GitHub pull request
+  params:
+  - name: PR_NUMBER
+    type: string
+  - name: NEW_IMAGE_TAG
+    type: string
+  - name: REPO_URL
+    type: string
+  steps:
+  - image: quay.io/redhat-telco-adoption/ubi8-minimal-git:1.0.0
+    name: git-clone
+    script: |
+      git clone $(params.REPO_URL) git-workspace
+    workingDir: $(workspaces.workspace.path)
+  - image: registry.k8s.io/kustomize/kustomize:v5.0.0
+    name: update-image-tag
+    script: "INITIAL_PATH=`pwd`\nPREVIEW_ENV_PATH=overlays/preview-environments\nPREVIEW_ENV_NAME=preview-$(params.PR_NUMBER)\n\ngit
+      config --global user.email \"noreply@redhat.com\"\ngit config --global user.name
+      \"openshift pipelines\"\n\ncd git-workspace\nmkdir -p ${PREVIEW_ENV_PATH}/${PREVIEW_ENV_NAME}\n\ncp
+      ${PREVIEW_ENV_PATH}/template/* ${PREVIEW_ENV_PATH}/${PREVIEW_ENV_NAME}/\ncd
+      ${PREVIEW_ENV_PATH}/${PREVIEW_ENV_NAME}/\n\nkustomize edit set namespace ${PREVIEW_ENV_NAME}
+      \nkustomize edit set image $(params.NEW_IMAGE_TAG)\ncd ${INITIAL_PATH}/git-workspace\n\nif
+      [ -z \"$(git status --porcelain)\" ]; then \n\n  echo \"No changes to push\"\n\nelse
+      \n\n  git add .\n\n  git commit -m \"Push changes for preview environment\n
+      \ ${PREVIEW_ENV_NAME}\" \n\n  git push origin main     \n\nfi\n"
+    workingDir: $(workspaces.workspace.path)
+  workspaces:
+  - name: workspace

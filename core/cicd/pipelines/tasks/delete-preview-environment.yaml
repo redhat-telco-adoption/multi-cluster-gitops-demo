@@ -1,0 +1,29 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  annotations:
+    tekton.dev/tags: git
+  labels:
+    app.kubernetes.io/version: "0.1"
+    operator.tekton.dev/provider-type: community
+  name: delete-preview-environment
+  namespace: cicd
+spec:
+  description: Deletes a preview environment once a GitHub Pull request has been merged
+  params:
+  - name: PR_NUMBER
+    type: string
+  - name: REPO_URL
+    type: string
+  steps:
+  - image: quay.io/redhat-telco-adoption/ubi8-minimal-git:1.0.0
+    name: git-clone
+    script: "git clone $(params.REPO_URL) git-workspace\n\nPREVIEW_ENV_PATH=overlays/preview-environments\n\nPREVIEW_ENV_NAME=preview-$(params.PR_NUMBER)\n\ngit
+      config --global user.email \"noreply@redhat.com\"\n\ngit config --global user.name
+      \"openshift pipelines\"\n\ncd git-workspace\n\nrm -rf ${PREVIEW_ENV_PATH}/${PREVIEW_ENV_NAME}\n\nif
+      [ -z \"$(git status --porcelain)\" ]; then \n\n  echo \"No changes to push\"\n\nelse
+      \n\n  git add .\n\n  git commit -m \"Delete preview environment ${PREVIEW_ENV_NAME}\"
+      \n\n  git push origin main     \n\nfi\n"
+    workingDir: $(workspaces.workspace.path)
+  workspaces:
+  - name: workspace

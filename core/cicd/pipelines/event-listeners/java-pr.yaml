@@ -1,0 +1,30 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: java-pr
+  namespace: cicd
+spec:
+  serviceAccountName: pipeline
+  triggers:
+    - bindings:
+        - kind: ClusterTriggerBinding
+          ref: github-pullreq
+      interceptors:
+        - params:
+            - name: eventTypes
+              value:
+                - pull_request
+          ref:
+            apiVersion: triggers.tekton.dev
+            kind: ClusterInterceptor
+            name: github
+        - name: Only when PRs are opened or synchronized
+          params:
+            - name: filter
+              value: has(body.action) && body.action in ['opened', 'synchronize', 'reopened']
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+      name: github-listener
+      template:
+        ref: java-pr

@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: cicd
+resources:
+- tasks/delete-preview-environment.yaml
+- tasks/provision-preview-environment.yaml
+- tasks/update-image-tag.yaml
+- pipelines/java-pr-build-pipeline.yaml
+- pipelines/java-pr-close-pipeline.yaml
+- pipelines/java-release-pipeline.yaml
+- pipelines/java-tag-pipeline.yaml
+- cluster-trigger-bindings/github-release-published.yaml
+- cluster-trigger-bindings/github-tag-created.yaml
+- trigger-templates/java-pr-close.yaml
+- trigger-templates/java-pr.yaml
+- trigger-templates/java-release.yaml
+- trigger-templates/java-tag.yaml
+- event-listeners/java-pr-close.yaml
+- event-listeners/java-pr.yaml
+- event-listeners/java-release.yaml
+- event-listeners/java-tag.yaml
+- routes/el-java-release.yaml
+- routes/el-java-tag.yaml
+- routes/java-pr-close.yaml
+- routes/java-pr.yaml

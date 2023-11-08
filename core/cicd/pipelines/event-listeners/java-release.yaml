@@ -1,0 +1,29 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: java-release
+  namespace: cicd
+spec:
+  serviceAccountName: pipeline
+  triggers:
+    - bindings:
+        - kind: ClusterTriggerBinding
+          ref: github-release-published
+      template:
+        ref: java-release
+      interceptors:
+        - params:
+            - name: eventTypes
+              value:
+                - release
+          ref:
+            apiVersion: triggers.tekton.dev
+            kind: ClusterInterceptor
+            name: github
+        - name: Only when release is "released"
+          params:
+            - name: filter
+              value: has(body.action) && body.action in ['released']
+          ref:
+            kind: ClusterInterceptor
+            name: cel

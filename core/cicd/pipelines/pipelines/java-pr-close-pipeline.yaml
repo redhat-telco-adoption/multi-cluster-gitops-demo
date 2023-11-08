@@ -1,0 +1,26 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: java-pr-close
+  namespace: cicd
+spec:
+  params:
+  - name: git-repo-url
+    type: string
+  - name: pr-number
+    type: string
+  tasks:
+  - name: delete-preview-environment
+    params:
+    - name: PR_NUMBER
+      value: $(params.pr-number)
+    - name: REPO_URL
+      value: $(params.git-repo-url)-config
+    taskRef:
+      kind: Task
+      name: delete-preview-environment
+    workspaces:
+    - name: workspace
+      workspace: workspace
+  workspaces:
+  - name: workspace

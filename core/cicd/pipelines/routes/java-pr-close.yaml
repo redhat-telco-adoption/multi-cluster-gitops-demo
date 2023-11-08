@@ -1,0 +1,19 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/managed-by: EventListener
+    app.kubernetes.io/part-of: Triggers
+    eventlistener: java-pr-close
+  name: el-java-pr-close
+spec:
+  tls:
+    termination: edge
+  port:
+    targetPort: http-listener
+  to:
+    kind: "Service"
+    name: el-java-pr-close
+    weight: 100
+status: {}

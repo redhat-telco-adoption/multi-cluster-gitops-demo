@@ -1,0 +1,30 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: java-tag
+  namespace: cicd
+spec:
+  serviceAccountName: pipeline
+  triggers:
+    - bindings:
+        - kind: ClusterTriggerBinding
+          ref: github-tag-created
+      template:
+        ref: java-tag
+      interceptors:
+        - params:
+            - name: eventTypes
+              value:
+                - create
+          ref:
+            apiVersion: triggers.tekton.dev
+            kind: ClusterInterceptor
+            name: github
+        - name: Only when release is "released"
+          params:
+            - name: filter
+              value: has(body.ref_type) && body.ref_type in ['tag']
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+  

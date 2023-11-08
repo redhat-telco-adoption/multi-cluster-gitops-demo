@@ -1,0 +1,36 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  annotations:
+    tekton.dev/tags: git
+  labels:
+    app.kubernetes.io/version: "0.1"
+    operator.tekton.dev/provider-type: community
+  name: update-image-tag
+  namespace: cicd
+spec:
+  description: Updates a container image tag using Kustomize
+  params:
+  - name: NEW_IMAGE_TAG
+    type: string
+  - name: REPO_URL
+    type: string
+  - name: UPDATE_PATH
+    type: string
+  steps:
+  - image: quay.io/redhat-telco-adoption/ubi8-minimal-git:1.0.0
+    name: git-clone
+    script: |
+      git clone $(params.REPO_URL) git-workspace
+    workingDir: $(workspaces.workspace.path)
+  - image: registry.k8s.io/kustomize/kustomize:v5.0.0
+    name: update-image-tag
+    script: "INITIAL_PATH=`pwd`\n\ngit config --global user.email \"noreply@redhat.com\"\ngit
+      config --global user.name \"openshift pipelines\"\n\ncd git-workspace\ncd $(params.UPDATE_PATH)\n\nkustomize
+      edit set image $(params.NEW_IMAGE_TAG)\n\ncd ${INITIAL_PATH}/git-workspace\n\nif
+      [ -z \"$(git status --porcelain)\" ]; then \n  echo \"No changes to push\"\nelse
+      \n  git add .\n  git commit -m \"Update container image tag\" \n  git push origin
+      main     \nfi\n"
+    workingDir: $(workspaces.workspace.path)
+  workspaces:
+  - name: workspace

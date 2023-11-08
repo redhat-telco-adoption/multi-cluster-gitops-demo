@@ -1,0 +1,48 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: java-tag
+  namespace: cicd
+spec:
+  params:
+  - name: git-repo-url
+  - name: git-repo-name
+  - name: content-type
+  - name: git-ref
+  - name: git-ref-type
+  - name: git-branch
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1beta1
+    kind: PipelineRun
+    metadata:
+      annotations:
+        pipeline.openshift.io/started-by: admin
+      generateName: java-tag-
+      labels:
+        tekton.dev/pipeline: java-tag
+      namespace: cicd
+    spec:
+      params:
+      - name: git-repo-url
+        value: $(tt.params.git-repo-url)
+      - name: git-revision
+        value: $(tt.params.git-ref)
+      - name: git-repo-name
+        value: $(tt.params.git-repo-name)
+      pipelineRef:
+        name: java-tag
+      status: null
+      workspaces:
+      - name: workspace
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+            - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1Gi
+            storageClassName: ocs-external-storagecluster-ceph-rbd
+            volumeMode: Filesystem
+      - name: maven-settings
+        emptyDir: {}
+

@@ -1,0 +1,19 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/managed-by: EventListener
+    app.kubernetes.io/part-of: Triggers
+    eventlistener: java-tag
+  name: el-java-tag
+spec:
+  tls:
+    termination: edge
+  port:
+    targetPort: http-listener
+  to:
+    kind: Service
+    name: el-java-tag
+    weight: null
+status: {}

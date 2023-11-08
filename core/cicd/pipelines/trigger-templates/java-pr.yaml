@@ -1,0 +1,54 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: java-pr
+  namespace: cicd
+spec:
+  params:
+  - name: git-repo-url
+  - name: pullreq-sha
+  - name: pullreq-action
+  - name: pullreq-number
+  - name: pullreq-repo-full_name
+  - name: pullreq-html-url
+  - name: pullreq-title
+  - name: pullreq-issue-url
+  - name: organisations-url
+  - name: user-type
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1beta1
+    kind: PipelineRun
+    metadata:
+      annotations:
+        pipeline.openshift.io/started-by: admin
+      generateName: java-pr-build-
+      labels:
+        tekton.dev/pipeline: java-pr-build
+      namespace: cicd
+    spec:
+      params:
+      - name: git-repo-url
+        value: $(tt.params.git-repo-url)
+      - name: container-image
+        value: quay.io/$(tt.params.pullreq-repo-full_name):$(tt.params.pullreq-sha)
+      - name: git-sha
+        value: $(tt.params.pullreq-sha)
+      - name: git-pr-number
+        value: $(tt.params.pullreq-number)
+      pipelineRef:
+        name: java-pr-build
+      status: null
+      workspaces:
+      - name: workspace
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+            - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1Gi
+            storageClassName: ocs-external-storagecluster-ceph-rbd
+            volumeMode: Filesystem
+      - name: maven-settings
+        emptyDir: {}
+

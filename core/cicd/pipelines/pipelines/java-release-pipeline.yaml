@@ -1,0 +1,30 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: java-release
+  namespace: cicd
+spec:
+  params:
+  - name: git-repo-url
+    type: string
+  - name: git-revision
+    type: string
+  - name: git-repo-name
+    type: string
+  tasks:
+  - name: update-image-tag
+    params:
+    - name: NEW_IMAGE_TAG
+      value: quay.io/$(params.git-repo-name):$(params.git-revision)
+    - name: REPO_URL
+      value: $(params.git-repo-url)-config
+    - name: UPDATE_PATH
+      value: overlays/production
+    taskRef:
+      kind: Task
+      name: update-image-tag
+    workspaces:
+    - name: workspace
+      workspace: workspace
+  workspaces:
+  - name: workspace

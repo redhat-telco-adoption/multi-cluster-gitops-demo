@@ -1,0 +1,18 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: ClusterTriggerBinding
+metadata:
+  labels:
+    operator.tekton.dev/operand-name: openshift-pipelines-addons
+  name: github-release-published
+spec:
+  params:
+  - name: git-repo-url
+    value: $(body.repository.html_url)
+  - name: release-action
+    value: $(body.action)
+  - name: git-repo-name
+    value: $(body.repository.full_name)
+  - name: git-tag
+    value: $(body.release.tag_name)
+  - name: git-target-commit-sh
+    value: $(body.release.target_commitish)
